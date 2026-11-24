@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "config": {
+    "site_url": "https://gta6recomp.com/blog",
+    "posts_json_url": "https://gta6recomp.com/data/posts.json",
+    "check_interval": "5m0s",
+    "webhook_name": "GTA6 Recomp Blog Alerts"
+  },
+  "initialized": true,
+  "seen_posts": {
+    "announcing-recomp-hub": {
+      "slug": "announcing-recomp-hub",
+      "title": "GTA 6 PC RECOMPILED — Dedicated Tracking Site \u0026 Community Hub",
+      "date": "2026-11-23",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "",
+      "image": "",
+      "excerpt": "Announcing gta6recomp.com as the centralized hub tracking GTA 6 PC recompilation projects, verified GitHub repositories, community Discord groups, and interactive tools.",
+      "draft": false
+    },
+    "cyberleek-releases-gta6-xbox-exe": {
+      "slug": "cyberleek-releases-gta6-xbox-exe",
+      "title": "Cyberleek Drops GTA 6 Xbox Executable: Official Hashes, Verification Guide \u0026 Recomp Impact",
+      "date": "2026-11-23",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "",
+      "image": "",
+      "excerpt": "Cyberleek has officially released the missing launch executable for GTA 6 Xbox Build 1.0.2.1. Here are the verified SHA-256 hashes, verification commands, and what this means for Leonida and PC recompilation teams.",
+      "draft": false
+    },
+    "cyberleek-xbox-build-leak": {
+      "slug": "cyberleek-xbox-build-leak",
+      "title": "Cyberleek Leaks GTA 6 Xbox Build 1.0.2.1: 209 GB Distributed and What It Means",
+      "date": "2026-11-21",
+      "tag": "news",
+      "author": "The team",
+      "repo": "leonida",
+      "image": "",
+      "excerpt": "A breakdown of the 209 GB GTA 6 Xbox build leak by Cyberleek, the missing executable ransom stunt, and how our static recompilation project is using this build.",
+      "draft": false
+    },
+    "leonida-notrexed-hookshot-history": {
+      "slug": "leonida-notrexed-hookshot-history",
+      "title": "Who Made Leonida? ItsNotRexed, the Developer Behind the Hookshot OoT Recomp",
+      "date": "2026-11-23",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "leonida",
+      "image": "",
+      "excerpt": "The developer behind Leonida previously built Hookshot, the Ocarina of Time PC recompilation that briefly disappeared from GitHub. Here's the full history and what it means for GTA 6.",
+      "draft": false
+    },
+    "leonida-nuked-discord-takedown-notrexed-quits": {
+      "slug": "leonida-nuked-discord-takedown-notrexed-quits",
+      "title": "Leonida Is Nuked: Discord Banned, GitHub Repo Deleted, Creator NotRexed Quits",
+      "date": "2026-11-24",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "leonida",
+      "image": "/assets/img/posts/leonida-discord-strike.jpg",
+      "excerpt": "Within hours on Monday night, Leonida — the most starred GTA 6 recompilation project — lost its 179,000-member Discord to a copyright strike, deleted its GitHub repository, and creator NotRexed announced his exit.",
+      "draft": false
+    },
+    "victory-first-pc-bootup-gta6": {
+      "slug": "victory-first-pc-bootup-gta6",
+      "title": "First PC Bootup: VIctory Boots Leaked GTA 6 Build to Menus \u0026 World Loading on Windows",
+      "date": "2026-11-24",
+      "tag": "devlog",
+      "author": "GTA6 Recomp Team",
+      "repo": "victory",
+      "image": "/assets/img/posts/victory-boot-setup.jpg",
+      "excerpt": "Historic milestone: VIctory by Marvisak has booted the leaked GTA 6 Xbox Series X build natively on Windows at 30 FPS, reaching menus, saves, and world loading.",
+      "draft": false
+    }
+  },
+  "total_notified": 0
+}

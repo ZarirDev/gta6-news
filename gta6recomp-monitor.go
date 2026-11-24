@@ -1,11 +1,3 @@
-// gta6recomp-monitor.go
-// Checks the GTA6 Recomp blog for newly added .post-row entries and notifies Discord.
-// Uses only the Go standard library. In GitHub Actions, set RUN_ONCE=1 so one
-// workflow execution performs one check and exits. Locally, it polls continuously.
-//
-// Required environment variable: DISCORD_WEBHOOK_URL (keep this secret; never put it in JSON)
-// Optional: WEBHOOK_NAME, CHECK_INTERVAL, RUN_ONCE, STATE_FILE
-
 package main
 
 import (
@@ -13,38 +5,42 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
-	"regexp"
+	"path"
 	"strings"
 	"time"
 )
 
-const defaultBlogURL = "https://gta6recomp.com/blog"
-const stateVersion = 1
+const stateFile = "monitor.json"
 
-type Post struct {
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Date        string `json:"date,omitempty"`
-	Category    string `json:"category,omitempty"`
-	Description string `json:"description,omitempty"`
-}
-
-type MonitorConfig struct {
+// Config is persisted in monitor.json. Keep webhook credentials in an environment
+// variable (or GitHub Actions secret), never in this file.
+type Config struct {
 	SiteURL       string `json:"site_url"`
-	Selector      string `json:"post_selector"`
+	PostsJSONURL  string `json:"posts_json_url"`
 	CheckInterval string `json:"check_interval"`
 	WebhookName   string `json:"webhook_name"`
-	StartedAt     string `json:"created_at"`
+}
+
+type Post struct {
+	Slug    string `json:"slug"`
+	Title   string `json:"title"`
+	Date    string `json:"date"`
+	Tag     string `json:"tag"`
+	Author  string `json:"author"`
+	Repo    string `json:"repo"`
+	Image   string `json:"image"`
+	Excerpt string `json:"excerpt"`
+	Draft   bool   `json:"draft"`
 }
 
 type State struct {
 	Version       int             `json:"version"`
-	Config        MonitorConfig   `json:"config"`
+	Config        Config          `json:"config"`
 	Initialized   bool            `json:"initialized"`
 	SeenPosts     map[string]Post `json:"seen_posts"`
 	TotalNotified int             `json:"total_notified"`
@@ -52,353 +48,302 @@ type State struct {
 }
 
 type DiscordPayload struct {
-	Embeds          []DiscordEmbed `json:"embeds"`
-	AllowedMentions struct {
-		Parse []string `json:"parse"`
-	} `json:"allowed_mentions"`
+	Username string         `json:"username,omitempty"`
+	Embeds   []DiscordEmbed `json:"embeds"`
 }
-
 type DiscordEmbed struct {
-	Title       string       `json:"title"`
-	URL         string       `json:"url"`
-	Description string       `json:"description,omitempty"`
-	Color       int          `json:"color"`
-	Fields      []EmbedField `json:"fields,omitempty"`
-	Footer      *EmbedFooter `json:"footer,omitempty"`
+	Title       string `json:"title"`
+	URL         string `json:"url"`
+	Description string `json:"description,omitempty"`
+	Color       int    `json:"color"`
+	Fields      []struct {
+		Name   string `json:"name"`
+		Value  string `json:"value"`
+		Inline bool   `json:"inline,omitempty"`
+	} `json:"fields,omitempty"`
+	Footer struct {
+		Text string `json:"text"`
+	} `json:"footer,omitempty"`
 }
 
-type EmbedField struct {
-	Name   string `json:"name"`
-	Value  string `json:"value"`
-	Inline bool   `json:"inline"`
+func defaultConfig() Config {
+	return Config{
+		SiteURL:       "https://gta6recomp.com/blog",
+		PostsJSONURL:  "https://gta6recomp.com/data/posts.json",
+		CheckInterval: "5m",
+		WebhookName:   "GTA 6 News",
+	}
 }
 
-type EmbedFooter struct {
-	Text string `json:"text"`
-}
-
-var (
-	anchorStartRE = regexp.MustCompile(`(?i)<a\b[^>]*>`)
-	classRE       = regexp.MustCompile(`(?i)\bclass\s*=\s*["']([^"']*)["']`)
-	hrefRE        = regexp.MustCompile(`(?i)\bhref\s*=\s*["']([^"']+)["']`)
-	timeRE        = regexp.MustCompile(`(?i)<time\b[^>]*\bdatetime\s*=\s*["']([^"']+)["']`)
-	titleRE       = regexp.MustCompile(`(?is)<h3\b[^>]*>(.*?)</h3>`)
-	descRE        = regexp.MustCompile(`(?is)<p\b[^>]*>(.*?)</p>`)
-	tagRE         = regexp.MustCompile(`(?is)<span\b[^>]*class\s*=\s*["'][^"']*\btag\b[^"']*["'][^>]*>(.*?)</span>`)
-	stripTagsRE   = regexp.MustCompile(`(?s)<[^>]*>`)
-	spaceRE       = regexp.MustCompile(`\s+`)
-)
-
-func main() {
-	webhook := strings.TrimSpace(os.Getenv("DISCORD_WEBHOOK_URL"))
-	if webhook == "" {
-		log.Fatal("DISCORD_WEBHOOK_URL is required (set it as a GitHub Actions secret)")
+func loadState() (State, error) {
+	b, err := os.ReadFile(stateFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return State{Version: 1, Config: defaultConfig(), SeenPosts: map[string]Post{}}, nil
 	}
-	if !strings.HasPrefix(webhook, "https://discord.com/api/webhooks/") &&
-		!strings.HasPrefix(webhook, "https://discordapp.com/api/webhooks/") {
-		log.Fatal("DISCORD_WEBHOOK_URL does not look like a Discord webhook URL")
-	}
-
-	interval := 5 * time.Minute
-	if raw := strings.TrimSpace(os.Getenv("CHECK_INTERVAL")); raw != "" {
-		parsed, err := time.ParseDuration(raw)
-		if err != nil || parsed < time.Minute {
-			log.Fatal("CHECK_INTERVAL must be at least 1m (for example 5m)")
-		}
-		interval = parsed
-	}
-
-	statePath := strings.TrimSpace(os.Getenv("STATE_FILE"))
-	if statePath == "" {
-		statePath = "monitor.json"
-	}
-	webhookName := strings.TrimSpace(os.Getenv("WEBHOOK_NAME"))
-	if webhookName == "" {
-		webhookName = "GTA6 Recomp Blog Alerts"
-	}
-
-	state, err := loadState(statePath)
 	if err != nil {
-		log.Fatalf("load %s: %v", statePath, err)
+		return State{}, err
 	}
-	if err := applyConfig(&state, interval, webhookName); err != nil {
-		log.Fatalf("prepare monitor configuration: %v", err)
+	var s State
+	if err := json.Unmarshal(b, &s); err != nil {
+		return State{}, fmt.Errorf("read %s: %w", stateFile, err)
 	}
-	// Persist safe startup/configuration metadata. This is idempotent, so the
-	// GitHub Actions workflow only creates a commit when the JSON really changes.
-	if err := saveState(statePath, state); err != nil {
-		log.Fatalf("save monitor configuration: %v", err)
+	if s.Version == 0 {
+		s.Version = 1
 	}
-
-	client := &http.Client{Timeout: 25 * time.Second}
-	log.Printf("Monitor: %s | selector: %s | interval: %s | Discord destination label: %s",
-		state.Config.SiteURL, state.Config.Selector, state.Config.CheckInterval, state.Config.WebhookName)
-	log.Printf("State file: %s | known posts: %d | initialized: %t", statePath, len(state.SeenPosts), state.Initialized)
-
-	if err := checkOnce(client, webhook, statePath, &state); err != nil {
-		log.Fatalf("check failed: %v", err)
+	if s.Config.SiteURL == "" {
+		s.Config.SiteURL = defaultConfig().SiteURL
 	}
-
-	if strings.EqualFold(os.Getenv("RUN_ONCE"), "1") || strings.EqualFold(os.Getenv("RUN_ONCE"), "true") {
-		return
+	if s.Config.PostsJSONURL == "" {
+		s.Config.PostsJSONURL = defaultConfig().PostsJSONURL
 	}
-
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	log.Printf("Continuous mode enabled; next check in %s", interval)
-	for range ticker.C {
-		if err := checkOnce(client, webhook, statePath, &state); err != nil {
-			log.Printf("Check failed (will retry next interval): %v", err)
-		}
+	if s.Config.CheckInterval == "" {
+		s.Config.CheckInterval = defaultConfig().CheckInterval
 	}
+	if s.Config.WebhookName == "" {
+		s.Config.WebhookName = defaultConfig().WebhookName
+	}
+	if s.SeenPosts == nil {
+		s.SeenPosts = map[string]Post{}
+	}
+	return s, nil
 }
 
-func applyConfig(state *State, interval time.Duration, webhookName string) error {
-	changed := false
-	if state.Version == 0 {
-		state.Version = stateVersion
-		changed = true
-	}
-	if state.SeenPosts == nil {
-		state.SeenPosts = make(map[string]Post)
-		changed = true
-	}
-	if state.Config.SiteURL != defaultBlogURL {
-		state.Config.SiteURL = defaultBlogURL
-		changed = true
-	}
-	if state.Config.Selector != "a.post-row" {
-		state.Config.Selector = "a.post-row"
-		changed = true
-	}
-	if state.Config.CheckInterval != interval.String() {
-		state.Config.CheckInterval = interval.String()
-		changed = true
-	}
-	if state.Config.WebhookName != webhookName {
-		state.Config.WebhookName = webhookName
-		changed = true
-	}
-	if state.Config.StartedAt == "" {
-		state.Config.StartedAt = time.Now().UTC().Format(time.RFC3339)
-		changed = true
-	}
-	if changed {
-		return nil // caller persists it together with the first check/baseline
-	}
-	return nil
-}
-
-func checkOnce(client *http.Client, webhook, statePath string, state *State) error {
-	posts, err := fetchPosts(client, state.Config.SiteURL)
+func saveState(s State) error {
+	b, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
-
-	// First successful fetch is the baseline. Do not send a burst of alerts for
-	// posts that were already present before the monitor was installed.
-	if !state.Initialized {
-		for _, post := range posts {
-			state.SeenPosts[post.URL] = post
-		}
-		state.Initialized = true
-		if err := saveState(statePath, *state); err != nil {
-			return fmt.Errorf("save initial baseline: %w", err)
-		}
-		log.Printf("Initial baseline saved: %d existing posts; no notifications sent.", len(posts))
-		return nil
+	tmp := stateFile + ".tmp"
+	if err := os.WriteFile(tmp, append(b, '\n'), 0600); err != nil {
+		return err
 	}
-
-	newPosts := make([]Post, 0)
-	for _, post := range posts {
-		if _, exists := state.SeenPosts[post.URL]; !exists {
-			newPosts = append(newPosts, post)
-		}
-	}
-	if len(newPosts) == 0 {
-		log.Printf("No new posts. Tracking %d posts.", len(state.SeenPosts))
-		return nil
-	}
-
-	// Process oldest-to-newest among newly discovered posts, so a backlog is
-	// announced in chronological order when several posts appear between runs.
-	for i := len(newPosts) - 1; i >= 0; i-- {
-		post := newPosts[i]
-		log.Printf("New post detected: %s", post.Title)
-		if err := sendDiscord(client, webhook, state.Config.WebhookName, post); err != nil {
-			return fmt.Errorf("Discord notification for %s: %w", post.URL, err)
-		}
-		state.SeenPosts[post.URL] = post
-		state.TotalNotified++
-		state.LastNewPostAt = time.Now().UTC().Format(time.RFC3339)
-		// Persist after every successful send to reduce duplicate alerts if a
-		// later notification in this same run fails.
-		if err := saveState(statePath, *state); err != nil {
-			return fmt.Errorf("save state after notifying %s: %w", post.URL, err)
-		}
-	}
-	log.Printf("Sent %d new-post notification(s).", len(newPosts))
-	return nil
+	return os.Rename(tmp, stateFile)
 }
 
-func fetchPosts(client *http.Client, url string) ([]Post, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func fetchPosts(endpoint string) ([]Post, error) {
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "GTA6RecompBlogMonitor/1.1 (personal blog update monitor)")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml")
+	req.Header.Set("User-Agent", "GTA6RecompMonitor/1.0 (+blog update notifier)")
+	req.Header.Set("Accept", "application/json")
+	client := &http.Client{Timeout: 25 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch posts JSON: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("website returned HTTP %s", resp.Status)
+		return nil, fmt.Errorf("fetch posts JSON: HTTP %s", resp.Status)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	if err != nil {
 		return nil, err
 	}
-	posts := parsePosts(string(body))
+	var posts []Post
+	if err := json.Unmarshal(body, &posts); err != nil {
+		return nil, fmt.Errorf("decode posts JSON: %w", err)
+	}
 	if len(posts) == 0 {
-		return nil, errors.New("found no a.post-row entries; refusing to treat an empty/changed page as valid")
+		return nil, errors.New("posts JSON contained zero entries; refusing to treat it as valid")
 	}
 	return posts, nil
 }
 
-func parsePosts(document string) []Post {
-	var posts []Post
-	lower := strings.ToLower(document)
-	for _, loc := range anchorStartRE.FindAllStringIndex(document, -1) {
-		openTag := document[loc[0]:loc[1]]
-		classMatch := classRE.FindStringSubmatch(openTag)
-		if len(classMatch) < 2 || !hasClass(classMatch[1], "post-row") {
-			continue
-		}
-		closeOffset := strings.Index(lower[loc[1]:], "</a>")
-		if closeOffset < 0 {
-			continue
-		}
-		inner := document[loc[1] : loc[1]+closeOffset]
-		hrefMatch := hrefRE.FindStringSubmatch(openTag)
-		titleMatch := titleRE.FindStringSubmatch(inner)
-		if len(hrefMatch) < 2 || len(titleMatch) < 2 {
-			continue
-		}
-		href := strings.TrimSpace(html.UnescapeString(hrefMatch[1]))
-		if strings.HasPrefix(href, "/") {
-			href = "https://gta6recomp.com" + href
-		}
-		if !strings.HasPrefix(href, "https://gta6recomp.com/") {
-			continue
-		}
-		post := Post{URL: href, Title: cleanText(titleMatch[1])}
-		if m := timeRE.FindStringSubmatch(inner); len(m) > 1 {
-			post.Date = html.UnescapeString(strings.TrimSpace(m[1]))
-		}
-		if m := tagRE.FindStringSubmatch(inner); len(m) > 1 {
-			post.Category = cleanText(m[1])
-		}
-		if m := descRE.FindStringSubmatch(inner); len(m) > 1 {
-			post.Description = cleanText(m[1])
-		}
-		if post.Title != "" {
-			posts = append(posts, post)
-		}
-	}
-	return posts
-}
-
-func hasClass(classList, wanted string) bool {
-	for _, className := range strings.Fields(classList) {
-		if className == wanted {
-			return true
-		}
-	}
-	return false
-}
-
-func cleanText(value string) string {
-	value = stripTagsRE.ReplaceAllString(value, " ")
-	value = html.UnescapeString(value)
-	return strings.TrimSpace(spaceRE.ReplaceAllString(value, " "))
-}
-
-func sendDiscord(client *http.Client, webhook, webhookName string, post Post) error {
-	description := post.Description
-	if len(description) > 3500 {
-		description = description[:3500] + "…"
-	}
-	embed := DiscordEmbed{
-		Title: post.Title, URL: post.URL, Description: description,
-		Color: 0x8B5CF6, Footer: &EmbedFooter{Text: webhookName + " • New blog post"},
-	}
-	if post.Category != "" || post.Date != "" {
-		embed.Fields = append(embed.Fields,
-			EmbedField{Name: "Category", Value: fallback(post.Category, "Uncategorized"), Inline: true},
-			EmbedField{Name: "Published", Value: fallback(post.Date, "Unknown"), Inline: true},
-		)
-	}
-	payload := DiscordPayload{Embeds: []DiscordEmbed{embed}}
-	payload.AllowedMentions.Parse = []string{}
-	data, err := json.Marshal(payload)
+func postURL(siteURL, slug string) string {
+	u, err := url.Parse(siteURL)
 	if err != nil {
-		return err
+		return "https://gta6recomp.com/post/" + url.PathEscape(slug)
 	}
-	req, err := http.NewRequest(http.MethodPost, webhook, bytes.NewReader(data))
+	u.Path = path.Join(path.Dir(u.Path), "post", slug)
+	return u.String()
+}
+
+func sendDiscord(webhook, username, siteURL string, p Post) error {
+	return sendDiscordPost(webhook, username, siteURL, p, "GTA6 Recomp Blog Monitor")
+}
+
+func sendDiscordPost(webhook, username, siteURL string, p Post, footer string) error {
+	if webhook == "" {
+		return errors.New("DISCORD_WEBHOOK_URL is not set")
+	}
+	if p.Title == "" || p.Slug == "" {
+		return errors.New("post is missing title or slug")
+	}
+	if len(p.Excerpt) > 3500 {
+		p.Excerpt = p.Excerpt[:3497] + "..."
+	}
+	embed := DiscordEmbed{Title: p.Title, URL: postURL(siteURL, p.Slug), Description: p.Excerpt, Color: 5793266}
+	if p.Date != "" || p.Tag != "" {
+		f := struct {
+			Name   string `json:"name"`
+			Value  string `json:"value"`
+			Inline bool   `json:"inline,omitempty"`
+		}{Name: "Published", Value: strings.TrimSpace(p.Date + "  •  " + strings.ToUpper(p.Tag)), Inline: true}
+		embed.Fields = append(embed.Fields, f)
+	}
+	if p.Repo != "" {
+		f := struct {
+			Name   string `json:"name"`
+			Value  string `json:"value"`
+			Inline bool   `json:"inline,omitempty"`
+		}{Name: "Project", Value: p.Repo, Inline: true}
+		embed.Fields = append(embed.Fields, f)
+	}
+	embed.Footer.Text = footer
+	payload := DiscordPayload{Username: username, Embeds: []DiscordEmbed{embed}}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("encode Discord notification: %w", err)
+	}
+	req, err := http.NewRequest(http.MethodPost, webhook, bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("send Discord notification: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return fmt.Errorf("Discord returned HTTP %s: %s", resp.Status, strings.TrimSpace(string(body)))
+		return fmt.Errorf("Discord webhook returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
 	return nil
 }
 
-func fallback(value, defaultValue string) string {
-	if strings.TrimSpace(value) == "" {
-		return defaultValue
+func sendDiscordTest(webhook, username, siteURL string, state State) error {
+	if webhook == "" {
+		return errors.New("TEST_DISCORD=1 requires DISCORD_WEBHOOK_URL to be set")
 	}
-	return value
+	if len(state.SeenPosts) == 0 {
+		return errors.New("monitor.json has no recorded posts to test with; run the monitor once first")
+	}
+
+	// SeenPosts is a map, so select the newest recorded post by publication date.
+	// Use slug as a stable tie-breaker when multiple posts share the same date.
+	var latest Post
+	found := false
+	for _, post := range state.SeenPosts {
+		if post.Slug == "" || post.Title == "" {
+			continue
+		}
+		if !found || post.Date > latest.Date || (post.Date == latest.Date && post.Slug > latest.Slug) {
+			latest = post
+			found = true
+		}
+	}
+	if !found {
+		return errors.New("monitor.json contains no valid recorded posts with a title and slug")
+	}
+
+	if err := sendDiscordPost(webhook, username, siteURL, latest, "TEST • Last recorded post from monitor.json"); err != nil {
+		return err
+	}
+	log.Printf("Sent test notification using last recorded post: %s (%s)", latest.Title, latest.Slug)
+	return nil
 }
 
-func loadState(path string) (State, error) {
-	state := State{Version: stateVersion, SeenPosts: make(map[string]Post)}
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return state, nil
-	}
-	if err != nil {
-		return state, err
-	}
-	if err := json.Unmarshal(data, &state); err != nil {
-		return state, fmt.Errorf("invalid JSON: %w", err)
-	}
-	if state.Version != 0 && state.Version != stateVersion {
-		return state, fmt.Errorf("unsupported state file version %d", state.Version)
-	}
-	if state.SeenPosts == nil {
-		state.SeenPosts = make(map[string]Post)
-	}
-	return state, nil
-}
-
-func saveState(path string, state State) error {
-	data, err := json.MarshalIndent(state, "", "  ")
+func runCheck(s *State, webhook string) error {
+	posts, err := fetchPosts(s.Config.PostsJSONURL)
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0600); err != nil {
+	current := make(map[string]Post, len(posts))
+	for _, p := range posts {
+		if p.Draft || strings.TrimSpace(p.Slug) == "" {
+			continue
+		}
+		current[p.Slug] = p
+	}
+	if len(current) == 0 {
+		return errors.New("no published posts found in JSON; refusing to update state")
+	}
+
+	if !s.Initialized {
+		s.SeenPosts = current
+		s.Initialized = true
+		if err := saveState(*s); err != nil {
+			return err
+		}
+		log.Printf("Initial baseline saved: %d published posts; no notifications sent.", len(current))
+		return nil
+	}
+
+	newPosts := make([]Post, 0)
+	for slug, p := range current {
+		if _, exists := s.SeenPosts[slug]; !exists {
+			newPosts = append(newPosts, p)
+		}
+	}
+	// The feed is newest-first; sort by date then slug for deterministic sending.
+	for i := 0; i < len(newPosts); i++ {
+		for j := i + 1; j < len(newPosts); j++ {
+			if newPosts[j].Date < newPosts[i].Date {
+				newPosts[i], newPosts[j] = newPosts[j], newPosts[i]
+			}
+		}
+	}
+	for _, p := range newPosts {
+		if err := sendDiscord(webhook, s.Config.WebhookName, s.Config.SiteURL, p); err != nil {
+			return err
+		}
+		s.SeenPosts[p.Slug] = p
+		s.TotalNotified++
+		s.LastNewPostAt = time.Now().UTC().Format(time.RFC3339)
+		if err := saveState(*s); err != nil {
+			return fmt.Errorf("notification sent, but saving state failed: %w", err)
+		}
+		log.Printf("Notified Discord about new post: %s", p.Title)
+	}
+	// Refresh metadata for existing posts without alerting on edits.
+	for slug, p := range current {
+		if _, ok := s.SeenPosts[slug]; ok {
+			s.SeenPosts[slug] = p
+		}
+	}
+	if err := saveState(*s); err != nil {
 		return err
 	}
-	return os.Rename(tmp, path)
+	if len(newPosts) == 0 {
+		log.Printf("No new posts. Checked %d published posts.", len(current))
+	}
+	return nil
+}
+
+func main() {
+	log.SetFlags(log.LstdFlags)
+	s, err := loadState()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := saveState(s); err != nil {
+		log.Fatal(err)
+	}
+	interval, err := time.ParseDuration(s.Config.CheckInterval)
+	if err != nil || interval < time.Minute {
+		log.Fatalf("invalid check_interval %q (must be at least 1m)", s.Config.CheckInterval)
+	}
+	webhook := strings.TrimSpace(os.Getenv("DISCORD_WEBHOOK_URL"))
+	if os.Getenv("TEST_DISCORD") == "1" {
+		if err := sendDiscordTest(webhook, s.Config.WebhookName, s.Config.SiteURL, s); err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Discord test message sent successfully. monitor.json and post history were not changed.")
+		return
+	}
+	runOnce := os.Getenv("RUN_ONCE") == "1"
+	log.Printf("Monitor: %s | JSON feed: %s | interval: %s | Discord destination label: %s", s.Config.SiteURL, s.Config.PostsJSONURL, interval, s.Config.WebhookName)
+	log.Printf("State file: %s | known posts: %d | initialized: %t", stateFile, len(s.SeenPosts), s.Initialized)
+	for {
+		if err := runCheck(&s, webhook); err != nil {
+			log.Printf("check failed: %v", err)
+		}
+		if runOnce {
+			return
+		}
+		time.Sleep(interval)
+	}
 }
