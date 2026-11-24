@@ -10,15 +10,17 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 )
 
 const stateFile = "monitor.json"
 
 // Config is persisted in monitor.json. Keep webhook credentials in an environment
-// variable (or GitHub Actions secret), never in this file.
+// variable, never in this file.
 type Config struct {
 	SiteURL       string `json:"site_url"`
 	PostsJSONURL  string `json:"posts_json_url"`
@@ -222,8 +224,6 @@ func sendDiscordTest(webhook, username, siteURL string, state State) error {
 		return errors.New("monitor.json has no recorded posts to test with; run the monitor once first")
 	}
 
-	// SeenPosts is a map, so select the newest recorded post by publication date.
-	// Use slug as a stable tie-breaker when multiple posts share the same date.
 	var latest Post
 	found := false
 	for _, post := range state.SeenPosts {
@@ -238,7 +238,6 @@ func sendDiscordTest(webhook, username, siteURL string, state State) error {
 	if !found {
 		return errors.New("monitor.json contains no valid recorded posts with a title and slug")
 	}
-
 	if err := sendDiscordPost(webhook, username, siteURL, latest, "TEST • Last recorded post from monitor.json"); err != nil {
 		return err
 	}
@@ -278,7 +277,6 @@ func runCheck(s *State, webhook string) error {
 			newPosts = append(newPosts, p)
 		}
 	}
-	// The feed is newest-first; sort by date then slug for deterministic sending.
 	for i := 0; i < len(newPosts); i++ {
 		for j := i + 1; j < len(newPosts); j++ {
 			if newPosts[j].Date < newPosts[i].Date {
@@ -298,7 +296,6 @@ func runCheck(s *State, webhook string) error {
 		}
 		log.Printf("Notified Discord about new post: %s", p.Title)
 	}
-	// Refresh metadata for existing posts without alerting on edits.
 	for slug, p := range current {
 		if _, ok := s.SeenPosts[slug]; ok {
 			s.SeenPosts[slug] = p
@@ -327,6 +324,8 @@ func main() {
 		log.Fatalf("invalid check_interval %q (must be at least 1m)", s.Config.CheckInterval)
 	}
 	webhook := strings.TrimSpace(os.Getenv("DISCORD_WEBHOOK_URL"))
+
+	// Keep the one-shot test mode, but never let it enter the polling loop.
 	if os.Getenv("TEST_DISCORD") == "1" {
 		if err := sendDiscordTest(webhook, s.Config.WebhookName, s.Config.SiteURL, s); err != nil {
 			log.Fatal(err)
@@ -334,16 +333,46 @@ func main() {
 		log.Println("Discord test message sent successfully. monitor.json and post history were not changed.")
 		return
 	}
+
 	runOnce := os.Getenv("RUN_ONCE") == "1"
 	log.Printf("Monitor: %s | JSON feed: %s | interval: %s | Discord destination label: %s", s.Config.SiteURL, s.Config.PostsJSONURL, interval, s.Config.WebhookName)
 	log.Printf("State file: %s | known posts: %d | initialized: %t", stateFile, len(s.SeenPosts), s.Initialized)
-	for {
+
+	if runOnce {
 		if err := runCheck(&s, webhook); err != nil {
 			log.Printf("check failed: %v", err)
+			os.Exit(1)
 		}
-		if runOnce {
+		return
+	}
+
+	// SIGINT (Ctrl+C) and SIGTERM (service stop) request a clean shutdown.
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(stop)
+
+	log.Printf("Continuous monitoring enabled. Next checks will run every %s. Press Ctrl+C to stop.", interval)
+	if err := runCheck(&s, webhook); err != nil {
+		log.Printf("check failed (will retry after %s): %v", interval, err)
+	}
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-stop:
+			log.Println("Shutdown signal received. Saving state and exiting.")
+			if err := saveState(s); err != nil {
+				log.Printf("final state save failed: %v", err)
+				os.Exit(1)
+			}
+			log.Println("Monitor stopped cleanly.")
 			return
+		case <-ticker.C:
+			if err := runCheck(&s, webhook); err != nil {
+				log.Printf("check failed (will retry at next interval): %v", err)
+			}
 		}
-		time.Sleep(interval)
 	}
 }
