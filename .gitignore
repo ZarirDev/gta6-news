@@ -1,0 +1,6 @@
+# Local compiled executable(s)
+monitor
+monitor.exe
+
+# Temporary atomic-write file
+monitor.json.tmp
