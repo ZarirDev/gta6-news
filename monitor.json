@@ -19,6 +19,17 @@
       "excerpt": "Announcing gta6recomp.com as the centralized hub tracking GTA 6 PC recompilation projects, verified GitHub repositories, community Discord groups, and interactive tools.",
       "draft": false
     },
+    "anyxboxx-two-missions-victory-fork-7fps-rtx4090-update": {
+      "slug": "anyxboxx-two-missions-victory-fork-7fps-rtx4090-update",
+      "title": "AnyXboxX Completes Two Missions, victory-fork Hits 7.6 FPS on RTX 4090 \u0026 ztrx Runs 90 Mins",
+      "date": "2026-11-25T03:25:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "anyxboxx",
+      "image": "",
+      "excerpt": "AnyXboxX completes the first two missions and hits 5.3–6.9 FPS in-world, Hyphen's victory-fork reaches 7.6 FPS on an RTX 4090 via PR, and ztrx runs the opening mission for 90+ minutes on an RTX 3050.",
+      "draft": false
+    },
     "cgbj-in-game-private-group-victory-xcl": {
       "slug": "cgbj-in-game-private-group-victory-xcl",
       "title": "Dev Blog: CGBJ Reaches In-Game — Technical Deep-Dive into the VIctory + XCL Hybrid",
@@ -65,7 +76,7 @@
     },
     "hyphen-first-graphics-render-gta6-pc-rtx-4090": {
       "slug": "hyphen-first-graphics-render-gta6-pc-rtx-4090",
-      "title": "Heavily Improved 3D Graphics Render: Hyphen Hits 78% Progress at 3 FPS on RTX 4090",
+      "title": "Heavily Improved 3D Graphics Render: Hyphen Hits 24% Progress at 3 FPS on RTX 4090",
       "date": "2026-11-24T18:45:00Z",
       "tag": "devlog",
       "author": "GTA6 Recomp Team",
@@ -115,7 +126,7 @@
       "author": "GTA6 Recomp Team",
       "repo": "omonkey",
       "image": "",
-      "excerpt": "New contender omonkey surges to #1 at 79% progress with shaders loading in Lucia's prison at ~5 FPS and slow player movement, streamed live on Rumble.",
+      "excerpt": "New contender omonkey surges to #1 at 20% progress with shaders loading in Lucia's prison at ~5 FPS and slow player movement, streamed live on Rumble.",
       "draft": false
     },
     "three-projects-reach-in-game-anyxboxx-cgbj-victory": {
@@ -127,6 +138,17 @@
       "repo": "anyxboxx",
       "image": "/assets/img/posts/victory-boot-setup.jpg",
       "excerpt": "AnyXboxX has entered Stage 6 (In-Game) with a controllable character and movement tutorial on an RTX 4070 SUPER, while VIctory achieves a 6-minute in-game run on an RTX 4080 Super.",
+      "draft": false
+    },
+    "victory-amd-clean-3d-cutscenes-shader-warmup-pc": {
+      "slug": "victory-amd-clean-3d-cutscenes-shader-warmup-pc",
+      "title": "JoshuuDev's victory-amd Takes #1 at 17%: Clean 3D Cutscenes \u0026 Shader Warm-Up on AMD Hardware",
+      "date": "2026-11-25T03:15:00Z",
+      "tag": "devlog",
+      "author": "GTA6 Recomp Team",
+      "repo": "victory-amd",
+      "image": "/assets/img/posts/victory-amd-1.png",
+      "excerpt": "New #1 contender JoshuuDev/victory-amd reaches 17% progress with clean full-color 3D cutscenes, neon lighting, and Lucia \u0026 Jason renders using AMD fixes and pre-warmed shaders.",
       "draft": false
     },
     "victory-first-pc-bootup-gta6": {
@@ -141,6 +163,6 @@
       "draft": false
     }
   },
-  "total_notified": 6,
-  "last_new_post_at": "2026-11-24T20:43:15Z"
+  "total_notified": 8,
+  "last_new_post_at": "2026-11-25T03:46:22Z"
 }
