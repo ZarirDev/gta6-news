@@ -74,6 +74,17 @@
       "excerpt": "A breakdown of the 209 GB GTA 6 Xbox build leak by Cyberleek, the missing executable ransom stunt, and how our static recompilation project is using this build.",
       "draft": false
     },
+    "dexnom-ray-tracing-open-world-belobug-amd-breakthrough": {
+      "slug": "dexnom-ray-tracing-open-world-belobug-amd-breakthrough",
+      "title": "DexNom Enables Ray-Traced Lighting \u0026 Open-World Water on PC, Belobug Renders Lit Open World (31%)",
+      "date": "2026-11-25T15:50:00Z",
+      "tag": "devlog",
+      "author": "GTA6 Recomp Team",
+      "repo": "dexnom",
+      "image": "/assets/img/posts/dexnom-1.png",
+      "excerpt": "DexNom/VIctory takes #1 at 31% with live ray-traced lighting and open-world water reflections on AMD, while Belobug renders the lit open world at 3–5 FPS and cuts scene GPU time from 225ms to 80ms.",
+      "draft": false
+    },
     "hyphen-first-graphics-render-gta6-pc-rtx-4090": {
       "slug": "hyphen-first-graphics-render-gta6-pc-rtx-4090",
       "title": "Heavily Improved 3D Graphics Render: Hyphen Hits 24% Progress at 3 FPS on RTX 4090",
@@ -129,6 +140,28 @@
       "excerpt": "New contender omonkey surges to #1 at 20% progress with shaders loading in Lucia's prison at ~5 FPS and slow player movement, streamed live on Rumble.",
       "draft": false
     },
+    "rorodev6-victory-series-s-mode-7-9fps-rx6700xt": {
+      "slug": "rorodev6-victory-series-s-mode-7-9fps-rx6700xt",
+      "title": "rorodev6/victory Hits 7–9 FPS with Bodies on RX 6700 XT via Series S Mode (3× Speedup)",
+      "date": "2026-11-25T17:30:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "victory",
+      "image": "",
+      "excerpt": "rorodev6 rebases onto shadowdog00's Series S mode build with an upscaler stand-in, pooled GPU memory, and top-left FPS counter — hitting 7–9 FPS with character bodies on an RX 6700 XT, live on Rumble.",
+      "draft": false
+    },
+    "soldsawn-8gb-nvidia-ztrx-gone-fishing-leonida-continued": {
+      "slug": "soldsawn-8gb-nvidia-ztrx-gone-fishing-leonida-continued",
+      "title": "soldsawn/victory-nvidia-8gb Hits 6 FPS on 8 GB GPUs, ztrx Reaches 'Gone Fishing' \u0026 Leonida Continued",
+      "date": "2026-11-25T15:35:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "leonida",
+      "image": "",
+      "excerpt": "soldsawn tunes victory-fork for 8 GB NVIDIA GPUs at ~6 FPS, Zettrox/ztrx clears Lucia's prologue into Jason's first mission, and ubiquitarianism/leonida continues Leonida with official Discord \u0026 Telegram.",
+      "draft": false
+    },
     "three-projects-reach-in-game-anyxboxx-cgbj-victory": {
       "slug": "three-projects-reach-in-game-anyxboxx-cgbj-victory",
       "title": "Three Projects Now Reach In-Game: AnyXboxX Joins CGBJ and VIctory in Major Breakthrough",
@@ -163,6 +196,6 @@
       "draft": false
     }
   },
-  "total_notified": 8,
-  "last_new_post_at": "2026-11-25T03:46:22Z"
+  "total_notified": 11,
+  "last_new_post_at": "2026-11-25T22:44:14Z"
 }
