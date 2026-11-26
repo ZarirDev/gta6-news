@@ -19,6 +19,17 @@
       "excerpt": "Announcing gta6recomp.com as the centralized hub tracking GTA 6 PC recompilation projects, verified GitHub repositories, community Discord groups, and interactive tools.",
       "draft": false
     },
+    "anyxboxx-15-20fps-rt-kelvaroq-dxr-victory-nvidia-mouse-nov26": {
+      "slug": "anyxboxx-15-20fps-rt-kelvaroq-dxr-victory-nvidia-mouse-nov26",
+      "title": "AnyXboxX Hits 15–20 FPS with Ray Tracing, Kelvaroq Adds Native DXR \u0026 VIctory-NVIDIA Gets Mouse Camera",
+      "date": "2026-11-26T19:55:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "anyxboxx",
+      "image": "",
+      "excerpt": "AnyXboxX merges PR #409 (15–20 FPS + RT combined base), fablinoo/kelvaroq implements native DXR \u0026 new memory management, VIctory-7900XTX hits 44.9 ms (~22 FPS), and VIctory-NVIDIA adds PC mouse camera support.",
+      "draft": false
+    },
     "anyxboxx-two-missions-victory-fork-7fps-rtx4090-update": {
       "slug": "anyxboxx-two-missions-victory-fork-7fps-rtx4090-update",
       "title": "AnyXboxX Completes Two Missions, victory-fork Hits 7.6 FPS on RTX 4090 \u0026 ztrx Runs 90 Mins",
@@ -28,6 +39,17 @@
       "repo": "anyxboxx",
       "image": "",
       "excerpt": "AnyXboxX completes the first two missions and hits 5.3–6.9 FPS in-world, Hyphen's victory-fork reaches 7.6 FPS on an RTX 4090 via PR, and ztrx runs the opening mission for 90+ minutes on an RTX 3050.",
+      "draft": false
+    },
+    "belobug-22fps-fsr4k-stability-leader-nov26": {
+      "slug": "belobug-22fps-fsr4k-stability-leader-nov26",
+      "title": "Belobug Surges to #1 at 62%: ~22 FPS (44.9 ms), FSR 4.1.2 4K, 80% Story \u0026 1.0 Stability",
+      "date": "2026-11-26T19:45:00Z",
+      "tag": "devlog",
+      "author": "GTA6 Recomp Team",
+      "repo": "victory",
+      "image": "",
+      "excerpt": "Belobug/VIctory-Belobug-AMD (2,174★) takes #1 at 62% with renderer patches 1/2/5/6/7, FidelityFX FSR 4.1.2 to 4K (-Fsr4K), ~22 FPS (44.9 ms/frame), 80% story progress, and 1.0 stability.",
       "draft": false
     },
     "cgbj-cool-fox-25fps-nvidia-mirrors-nov26": {
@@ -240,6 +262,6 @@
       "draft": false
     }
   },
-  "total_notified": 15,
-  "last_new_post_at": "2026-11-26T14:16:41Z"
+  "total_notified": 17,
+  "last_new_post_at": "2026-11-26T23:04:38Z"
 }
