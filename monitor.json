@@ -30,6 +30,17 @@
       "excerpt": "AnyXboxX completes the first two missions and hits 5.3–6.9 FPS in-world, Hyphen's victory-fork reaches 7.6 FPS on an RTX 4090 via PR, and ztrx runs the opening mission for 90+ minutes on an RTX 3050.",
       "draft": false
     },
+    "cgbj-cool-fox-25fps-nvidia-mirrors-nov26": {
+      "slug": "cgbj-cool-fox-25fps-nvidia-mirrors-nov26",
+      "title": "CGBJ (cool_fox) Surges to #1 at 58% with 25 FPS Avg on NVIDIA \u0026 80% Story — Original Repo Nuked, Mirrors Live",
+      "date": "2026-11-26T10:15:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "cgbj",
+      "image": "/assets/img/posts/victory-nine-months-ago.jpg",
+      "excerpt": "CGBJ (codec-d/cool_fox) reports 25 FPS average gameplay on NVIDIA, 80% story progress, and 0.85 rendering/stability. After the original repo was nuked, unmodified GPL-3.0 mirrors live on at DoubleGhosty/cool_fox and GTAHub.",
+      "draft": false
+    },
     "cgbj-in-game-private-group-victory-xcl": {
       "slug": "cgbj-in-game-private-group-victory-xcl",
       "title": "Dev Blog: CGBJ Reaches In-Game — Technical Deep-Dive into the VIctory + XCL Hybrid",
@@ -96,6 +107,17 @@
       "excerpt": "Historic milestone: Hyphen delivers a heavily improved 3D in-game graphics render on PC with early raytracing, prison yard footage, and Lucia shaders, holding 3 FPS on an NVIDIA RTX 4090.",
       "draft": false
     },
+    "hyphen-traffic-nvidia-bike-map-victory-7900xtx-nov26": {
+      "slug": "hyphen-traffic-nvidia-bike-map-victory-7900xtx-nov26",
+      "title": "Hyphen / Traffic NVIDIA Build Rides a Bike Around the Whole Map With Zero Freezes + VIctory-7900XTX Hits 22 FPS",
+      "date": "2026-11-26T04:50:00Z",
+      "tag": "devlog",
+      "author": "GTA6 Recomp Team",
+      "repo": "hyphen",
+      "image": "/assets/img/posts/hyphen-render-1.png",
+      "excerpt": "New footage from Traffic's NVIDIA build (Hyphen) shows a freeze-free bike ride across the entire map, while avatarmanz/VIctory-7900XTX reaches 19–22 FPS in the boat mission and rorodev6 adds HUD \u0026 map rendering.",
+      "draft": false
+    },
     "leonida-notrexed-hookshot-history": {
       "slug": "leonida-notrexed-hookshot-history",
       "title": "Who Made Leonida? ItsNotRexed, the Developer Behind the Hookshot OoT Recomp",
@@ -116,6 +138,17 @@
       "repo": "leonida",
       "image": "/assets/img/posts/leonida-discord-strike.jpg",
       "excerpt": "Within hours on Monday night, Leonida — the most starred GTA 6 recompilation project — lost its 179,000-member Discord to a copyright strike, deleted its GitHub repository, and creator NotRexed announced his exit.",
+      "draft": false
+    },
+    "myokex-victory-amd-vifx3-nvidia-forks-nov26": {
+      "slug": "myokex-victory-amd-vifx3-nvidia-forks-nov26",
+      "title": "myokex/victory-amd (vi-fx3 Branch) Renders Lit Open World \u0026 Combat + VIctory-NVIDIA Hits 22 FPS on RTX 5070",
+      "date": "2026-11-26T04:55:00Z",
+      "tag": "devlog",
+      "author": "GTA6 Recomp Team",
+      "repo": "victory-amd",
+      "image": "/assets/img/posts/vifx3-2.png",
+      "excerpt": "myokex/victory-amd's vi-fx3 branch delivers indirect light floor, quad reads, and open-world combat \u0026 coastal stilt-house captures, while trustno1-coder/VIctory-NVIDIA hits ~20–22 FPS on an RTX 5070.",
       "draft": false
     },
     "new-group-cgbj-emerges-gta6-pc-scene": {
@@ -173,6 +206,17 @@
       "excerpt": "AnyXboxX has entered Stage 6 (In-Game) with a controllable character and movement tutorial on an RTX 4070 SUPER, while VIctory achieves a 6-minute in-game run on an RTX 4080 Super.",
       "draft": false
     },
+    "victory-7900xtx-55-belobug-50-vice-tay-kelvaroq-nov26": {
+      "slug": "victory-7900xtx-55-belobug-50-vice-tay-kelvaroq-nov26",
+      "title": "VIctory-7900XTX Jumps to 55% \u0026 Belobug Hits 50%, Plus New Reports on Vice-Tay \u0026 Kelvaroq",
+      "date": "2026-11-26T10:25:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "victory",
+      "image": "",
+      "excerpt": "VIctory-7900XTX reaches 55% (19–22 FPS boat mission, 41m crash-free) and Belobug hits 50% (5–8 FPS lit open world), while Vice-Tay (15.2 FPS / 56m on RTX 4090) and fablinoo/kelvaroq (10 FPS) join the leaderboard.",
+      "draft": false
+    },
     "victory-amd-clean-3d-cutscenes-shader-warmup-pc": {
       "slug": "victory-amd-clean-3d-cutscenes-shader-warmup-pc",
       "title": "JoshuuDev's victory-amd Takes #1 at 28%: Clean 3D Cutscenes \u0026 Shader Warm-Up on AMD Hardware",
@@ -196,6 +240,6 @@
       "draft": false
     }
   },
-  "total_notified": 11,
-  "last_new_post_at": "2026-11-25T22:44:14Z"
+  "total_notified": 15,
+  "last_new_post_at": "2026-11-26T14:16:41Z"
 }
