@@ -118,6 +118,17 @@
       "excerpt": "DexNom/VIctory takes #1 at 31% with live ray-traced lighting and open-world water reflections on AMD, while Belobug renders the lit open world at 3–5 FPS and cuts scene GPU time from 225ms to 80ms.",
       "draft": false
     },
+    "gta6-pc-multiplayer-25-30fps-vice-tay-stage7-nov27": {
+      "slug": "gta6-pc-multiplayer-25-30fps-vice-tay-stage7-nov27",
+      "title": "GTA 6 Multiplayer Running on PC at 25–30 FPS With Proximity Voice, Plus Vice-Tay Hits Stage 7",
+      "date": "2026-11-27T05:55:00Z",
+      "tag": "news",
+      "author": "GTA6 Recomp Team",
+      "repo": "cgbj",
+      "image": "",
+      "excerpt": "A private CGBJ fork demonstrates working GTA 6 PC multiplayer at 25–30 FPS with proximity voice chat, while Vice-Tay reports Stage 7 Playable on an RTX 4090 and DexNom opens fluxer.gg/p9Y0JR0q.",
+      "draft": false
+    },
     "hyphen-first-graphics-render-gta6-pc-rtx-4090": {
       "slug": "hyphen-first-graphics-render-gta6-pc-rtx-4090",
       "title": "Heavily Improved 3D Graphics Render: Hyphen Hits 24% Progress at 3 FPS on RTX 4090",
@@ -262,6 +273,6 @@
       "draft": false
     }
   },
-  "total_notified": 17,
-  "last_new_post_at": "2026-11-26T23:04:38Z"
+  "total_notified": 18,
+  "last_new_post_at": "2026-11-27T14:45:31Z"
 }
